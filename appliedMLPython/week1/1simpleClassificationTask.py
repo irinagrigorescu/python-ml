@@ -5,6 +5,7 @@ from sklearn.model_selection import train_test_split
 from matplotlib import cm
 from mpl_toolkits.mplot3d import Axes3D
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neighbors import DistanceMetric
 from adspy_shared_utilities import plot_fruit_knn
 
 
@@ -53,7 +54,8 @@ y = fruits['fruit_label']
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
 # Create k nearest neighbours classifier object
-knn = KNeighborsClassifier(n_neighbors = 5)
+#metricKNN = DistanceMetric.get_metric('minkowski', p=1)
+knn = KNeighborsClassifier(n_neighbors = 3, metric='minkowski', p=1)
 
 # Fit the classifier (train) on the training data
 knn.fit(X_train, y_train)
@@ -109,40 +111,51 @@ plt.title('Width vs Height for all fruits')
 plt.legend(legendPlot, loc=2)
 
 # Plot the decision boundaries of the k-NN classifier
-#plot_fruit_knn(X_train, y_train, 5, 'uniform')   # we choose 5 nearest neighbors
+plot_fruit_knn(X_train, y_train, 3, 'distance')   # we choose 3 nearest neighbors
+exit(0)
 
 ################### Look at the algorithm's performance
 # How sensitive is k-NN classification accuracy to the choice of the 'k' parameter?
 k_range = range(1,20)
-scores = []
+scoresP1 = []
+scoresP2 = []
 
 for k in k_range:
-    knn = KNeighborsClassifier(n_neighbors = k)
-    knn.fit(X_train, y_train)
-    scores.append(knn.score(X_test, y_test))
+    knnP1 = KNeighborsClassifier(n_neighbors = k, metric='minkowski', p=1)
+    knnP2 = KNeighborsClassifier(n_neighbors = k, metric='minkowski', p=2)
+    knnP1.fit(X_train, y_train)
+    knnP2.fit(X_train, y_train)
+    scoresP1.append(knnP1.score(X_test, y_test))
+    scoresP2.append(knnP2.score(X_test, y_test))
 
 fig3 = plt.figure()
 plt.xlabel('k')
 plt.ylabel('accuracy')
-plt.scatter(k_range, scores)
+plt.scatter(k_range, scoresP1, color='blue')
+plt.scatter(k_range, scoresP2, color='red', alpha=0.5)
 plt.xticks([0,5,10,15,20]);
 
 
 # How sensitive is k-NN classification accuracy to the train/test split proportion?
 t = [0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2]
 
-knn = KNeighborsClassifier(n_neighbors = 5)
+knnP1 = KNeighborsClassifier(n_neighbors = 3, metric='minkowski', p=1)
+knnP2 = KNeighborsClassifier(n_neighbors = 3, metric='minkowski', p=2)
 
 plt.figure()
 
 for s in t:
 
-    scores = []
+    scoresP1 = []
+    scoresP2 = []
     for i in range(1,1000):
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 1-s)
-        knn.fit(X_train, y_train)
-        scores.append(knn.score(X_test, y_test))
-    plt.plot(s, np.mean(scores), 'bo')
+        knnP1.fit(X_train, y_train)
+        knnP2.fit(X_train, y_train)
+        scoresP1.append(knnP1.score(X_test, y_test))
+        scoresP2.append(knnP2.score(X_test, y_test))
+    plt.plot(s, np.mean(scoresP1), 'bo')
+    plt.plot(s, np.mean(scoresP2), 'ro')
 
 plt.xlabel('Training set proportion (%)')
 plt.ylabel('accuracy');
